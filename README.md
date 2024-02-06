@@ -1,6 +1,6 @@
 # schemavzrd
 
-A ui editor for datavzrd configuration files
+A ui editor for datavzrd configuration files. Use it [here](https://datavzrd.github.io/schemavzrd/schemavzrd.html)!
 
 ### Usage
 
