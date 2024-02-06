@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>schemavzrd</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous"></head>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <h1 style="text-align: center; font-weight: lighter; margin-bottom: 20px;">schema<b>vzrd</b></h1>
+    </div>
+    <div class="row mb-3">
+        <div class="collapse" id="manual">
+            <div class="card card-body">
+                1. Upload one or multiple csv files<br>
+                2. Use the process csv button to generate a basic datavzrd configuration file with the headers from the given csv files.<br>
+                3. Customize the config to your needs with the displayed form.<br>
+                4. Download the yaml file with the download config button.
+            </div>
+        </div>
+    </div>
+    <div class="row col-md-12 justify-content-center">
+        <div class="col-2">
+            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#manual" aria-expanded="false" aria-controls="manual">
+                Manual
+            </button>
+        </div>
+        <div class="col-6">
+            <input class="input form-control" type="file" id="fileInput" accept=".csv" multiple>
+        </div>
+        <div class="col-2">
+            <button class="btn btn-primary" id="configBtn">Process CSV</button>
+        </div>
+        <div class="col-2">
+            <button class="btn btn-success" onclick="getData()">Download config</button>
+        </div>
+    </div>
+    <div id="editor_holder" class="mt-3" style="width: 800px; height: calc(100vh - 100px); margin: 0 auto; overflow: auto;"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.0.0/js-yaml.min.js"></script>
+<script>
+    document.getElementById('configBtn').addEventListener('click', function() {
+        const element = document.getElementById('editor_holder');
+        window['editor'] = new JSONEditor(element, {
+            schema: {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ItemsSpec",
+  "type": "object",
+  "required": [
+    "datasets",
+    "views"
+  ],
+  "properties": {
+    "aux-libraries": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "datasets": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/DatasetSpecs"
+      }
+    },
+    "default-view": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "max-in-memory-rows": {
+      "default": 1000,
+      "type": "integer",
+      "format": "uint",
+      "minimum": 0.0
+    },
+    "name": {
+      "default": "",
+      "type": "string"
+    },
+    "views": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ItemSpecs"
+      }
+    },
+    "webview-controls": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "AdditionalColumnSpec": {
+      "type": "object",
+      "properties": {
+        "custom-plot": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomPlot"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "display-mode": {
+          "default": "normal",
+          "allOf": [
+            {
+              "$ref": "#/definitions/DisplayMode"
+            }
+          ]
+        },
+        "link-to-url": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinkToUrlSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "value": {
+          "default": "function(row) { return '' }",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AuxDomainColumns": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "BarPlot": {
+      "type": "object",
+      "properties": {
+        "aux-domain-columns": {
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/AuxDomainColumns"
+            }
+          ]
+        },
+        "color": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ColorDefinition"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "domain": {
+          "default": null,
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number",
+            "format": "float"
+          }
+        },
+        "scale": {
+          "default": "none",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ScaleType"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "Color": {
+      "type": "string"
+    },
+    "ColorDefinition": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "default": null,
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "domain-mid": {
+          "default": null,
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "float"
+        },
+        "range": {
+          "default": [],
+          "allOf": [
+            {
+              "$ref": "#/definitions/ColorRange"
+            }
+          ]
+        },
+        "scale": {
+          "default": "none",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ScaleType"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "ColorRange": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Color"
+      }
+    },
+    "CustomPlot": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "default": "",
+          "type": "string"
+        },
+        "spec": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "spec-path": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "vega-controls": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DatasetSpecs": {
+      "type": "object",
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "headers": {
+          "default": 1,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "links": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "$ref": "#/definitions/LinkSpec"
+          }
+        },
+        "offer-excel": {
+          "default": false,
+          "type": "boolean"
+        },
+        "path": {
+          "type": "string"
+        },
+        "separator": {
+          "default": ",",
+          "type": "string",
+          "maxLength": 1,
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "DisplayMode": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "detail",
+        "hidden"
+      ]
+    },
+    "HeaderDisplayMode": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "hidden"
+      ]
+    },
+    "HeaderSpecs": {
+      "type": "object",
+      "properties": {
+        "display-mode": {
+          "default": "normal",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HeaderDisplayMode"
+            }
+          ]
+        },
+        "ellipsis": {
+          "default": null,
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "label": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "plot": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PlotSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "Heatmap": {
+      "type": "object",
+      "properties": {
+        "aux-domain-columns": {
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/AuxDomainColumns"
+            }
+          ]
+        },
+        "clamp": {
+          "default": true,
+          "type": "boolean"
+        },
+        "color-scheme": {
+          "default": "",
+          "type": "string"
+        },
+        "custom-content": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "domain": {
+          "default": null,
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "domain-mid": {
+          "default": null,
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "float"
+        },
+        "range": {
+          "default": [],
+          "allOf": [
+            {
+              "$ref": "#/definitions/ColorRange"
+            }
+          ]
+        },
+        "scale": {
+          "default": "none",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ScaleType"
+            }
+          ]
+        },
+        "type": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/VegaType"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "ItemSpecs": {
+      "type": "object",
+      "properties": {
+        "dataset": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "datasets": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "desc": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hidden": {
+          "default": false,
+          "type": "boolean"
+        },
+        "max-in-memory-rows": {
+          "default": null,
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "page-size": {
+          "default": 20,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "render-html": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RenderHtmlSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "render-plot": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RenderPlotSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "render-table": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RenderTableSpecs"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "LinkSpec": {
+      "type": "object",
+      "properties": {
+        "column": {
+          "default": "",
+          "type": "string"
+        },
+        "optional": {
+          "default": false,
+          "type": "boolean"
+        },
+        "table-row": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "view": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "LinkToUrlSpec": {
+      "type": "object",
+      "properties": {
+        "custom-content": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "LinkToUrlSpecEntry": {
+      "type": "object",
+      "required": [
+        "url"
+      ],
+      "properties": {
+        "new-window": {
+          "default": true,
+          "type": "boolean"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PlotSpec": {
+      "type": "object",
+      "properties": {
+        "bars": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/BarPlot"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "heatmap": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Heatmap"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ticks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TickPlot"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "RenderColumnSpec": {
+      "type": "object",
+      "properties": {
+        "custom": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "custom-path": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "custom-plot": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomPlot"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "display-mode": {
+          "default": "normal",
+          "allOf": [
+            {
+              "$ref": "#/definitions/DisplayMode"
+            }
+          ]
+        },
+        "ellipsis": {
+          "default": null,
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "label": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "link-to-url": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinkToUrlSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "optional": {
+          "default": false,
+          "type": "boolean"
+        },
+        "plot": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PlotSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "plot-view-legend": {
+          "default": false,
+          "type": "boolean"
+        },
+        "precision": {
+          "default": 2,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "RenderHtmlSpec": {
+      "type": "object",
+      "required": [
+        "script-path"
+      ],
+      "properties": {
+        "script-path": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RenderPlotSpec": {
+      "type": "object",
+      "properties": {
+        "spec": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "spec-path": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "RenderTableSpecs": {
+      "type": "object",
+      "properties": {
+        "add-columns": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "$ref": "#/definitions/AdditionalColumnSpec"
+          }
+        },
+        "columns": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/RenderColumnSpec"
+          }
+        },
+        "headers": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "$ref": "#/definitions/HeaderSpecs"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ScaleType": {
+      "type": "string",
+      "enum": [
+        "linear",
+        "pow",
+        "sqrt",
+        "symlog",
+        "log",
+        "time",
+        "utc",
+        "ordinal",
+        "band",
+        "point",
+        "none"
+      ]
+    },
+    "TickPlot": {
+      "type": "object",
+      "properties": {
+        "aux-domain-columns": {
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/AuxDomainColumns"
+            }
+          ]
+        },
+        "color": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ColorDefinition"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "domain": {
+          "default": null,
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number",
+            "format": "float"
+          }
+        },
+        "scale": {
+          "default": "none",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ScaleType"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "VegaType": {
+      "type": "string",
+      "enum": [
+        "nominal",
+        "ordinal",
+        "quantitative",
+        "none"
+      ]
+    }
+  }
+},
+            theme: 'bootstrap5',
+            disable_edit_json: true,
+            display_required_only: true,
+            startval: JSON.parse(document.getElementById('configBtn').dataset['json'])
+        });
+    });
+    const j = {
+        "datasets": {},
+        "views": {}
+    };
+    document.getElementById('configBtn').dataset['json'] = JSON.stringify(j);
+    function processFiles(files) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const base = JSON.parse(document.getElementById('configBtn').dataset['json']); // Create a deep copy of j
+                const csvText = event.target.result;
+                const lines = csvText.split('\n');
+                if (lines.length > 0) {
+                    const columnNames = lines[0].trim().split(',');
+                    let name = file.name.split('.')[0];
+                    base.datasets[name] = {
+                        path: file.name
+                    }
+                    base.views[name] = {
+                        dataset: name,
+                        'render-table': {
+                            columns: {}
+                        }
+                    };
+
+                    for (const columnName of columnNames) {
+                        base.views[name]['render-table'].columns[columnName] = {
+                            'display-mode': 'normal'
+                        };
+                    }
+                    document.getElementById('configBtn').dataset['json'] = JSON.stringify(base);
+                } else {
+                    console.error('CSV file is empty.');
+                }
+            };
+
+            reader.onerror = function() {
+                console.error('Error reading the file:', file.name);
+            };
+
+            reader.readAsText(file);
+        }
+    }
+
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+        const files = event.target.files;
+        if (files.length > 0) {
+            processFiles(files);
+        } else {
+            console.error('Please select one or more files.');
+        }
+    });
+
+    function downloadYaml(jsonObj) {
+        const yamlString = jsyaml.dump(jsonObj);
+
+        // Create blob
+        const blob = new Blob([yamlString], { type: 'text/yaml' });
+
+        // Create download link
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = 'config.yaml';
+
+        // Trigger download
+        downloadLink.click();
+    }
+
+    // Function to get form data
+    function getData() {
+        var formData = editor.getValue();
+        downloadYaml(formData);
+    }
+</script>
+</body>
+</html>
